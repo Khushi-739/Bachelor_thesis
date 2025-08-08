@@ -6,8 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 
-// --- UPDATED ROLES ARRAY ---
-// We now include the specific email and the role the API expects for each card.
+// --- UPDATED ROLES ARRAY (Removed testEmail) ---
 const roles = [
   {
     id: 'sse_mw',
@@ -15,7 +14,6 @@ const roles = [
     icon: 'person',
     description: 'Create Work at Height permits',
     apiRole: 'SSE_MAINTENANCE',
-    testEmail: 'sse-mw@railway.com',
     dashboardUrl: '/dashboard/sse-maintenance'
   },
   {
@@ -24,7 +22,6 @@ const roles = [
     icon: 'electrical_services',
     description: 'Create Electrical permits',
     apiRole: 'SSE_MAINTENANCE',
-    testEmail: 'sse-substation@railway.com',
     dashboardUrl: '/dashboard/sse-maintenance'
   },
   {
@@ -33,7 +30,6 @@ const roles = [
     icon: 'check_circle',
     description: 'Review and approve permits',
     apiRole: 'SSE_SHOP',
-    testEmail: 'sse-shop@railway.com',
     dashboardUrl: '/dashboard/sse-shop'
   },
   {
@@ -42,18 +38,16 @@ const roles = [
     icon: 'security',
     description: 'Monitor and oversee safety compliance',
     apiRole: 'SAFETY_OFFICER',
-    testEmail: 'safetyofficer@railway.com',
     dashboardUrl: '/dashboard/safety-officer'
   }
 ];
-// --- END OF UPDATE ---
 
-// Define a type for a single role object for clarity
-type Role = typeof roles[0];
+type RoleInfo = typeof roles[0];
 
 const RoleSelection = () => {
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
-  const [password, setPassword] = useState("password123"); // Default password for testing
+  const [selectedRole, setSelectedRole] = useState<RoleInfo | null>(null);
+  const [email, setEmail] = useState(""); // <-- State for user-typed email
+  const [password, setPassword] = useState(""); // <-- State for user-typed password
   const navigate = useNavigate();
 
   const handleRoleSelect = (roleId: string) => {
@@ -63,15 +57,17 @@ const RoleSelection = () => {
     }
   };
 
+  // --- CORRECTED LOGIN FUNCTION ---
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedRole || !password) {
+    if (!selectedRole || !email || !password) {
       return;
     }
 
     try {
+      // Now uses the email from the input field
       const response = await axios.post('http://localhost:3001/api/auth/login', {
-        email: selectedRole.testEmail,
+        email: email,
         password: password,
         role: selectedRole.apiRole,
       });
@@ -102,12 +98,25 @@ const RoleSelection = () => {
               <h2 className="text-2xl font-bold text-md-text-primary font-roboto mb-2">
                 {selectedRole.name} Login
               </h2>
-              <p className="text-md-text-secondary font-roboto">
-                Logging in as: <strong>{selectedRole.testEmail}</strong>
-              </p>
             </div>
             
+            {/* --- CORRECTED LOGIN FORM --- */}
             <form onSubmit={handleLogin} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-md-text-primary font-roboto">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="border-md-border focus:border-md-primary font-roboto"
+                  placeholder="Enter your email"
+                  required
+                />
+              </div>
+              
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-md-text-primary font-roboto">
                   Password
@@ -118,6 +127,7 @@ const RoleSelection = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="border-md-border focus:border-md-primary font-roboto"
+                  placeholder="Enter your password"
                   required
                 />
               </div>
