@@ -1,0 +1,79 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// UPDATED ENUM for the main job classes
+enum Role {
+  SSE_MAINTENANCE
+  SSE_SHOP
+  SAFETY_OFFICER
+}
+
+// NEW ENUM for the specializations within a role
+enum Specialization {
+  MW // Mechanical Work
+  SUBSTATION
+}
+
+model User {
+  id             String          @id @default(cuid())
+  email          String          @unique
+  name           String
+  password       String
+  role           Role
+  specialization Specialization? // ADDED: This field is optional
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdPermits  Permit[]   @relation("CreatedBy")
+  approvedPermits Approval[] @relation("ApprovedBy")
+}
+
+// --- No changes to the models below, but include them in the file ---
+
+enum PermitStatus {
+  PENDING
+  APPROVED
+  ONGOING
+  CLOSED
+  DENIED
+}
+
+model Permit {
+  id          String       @id @default(cuid())
+  title       String
+  description String
+  location    String
+  status      PermitStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  createdById String
+  creator     User   @relation("CreatedBy", fields: [createdById], references: [id])
+
+  approvals Approval[]
+}
+
+model Approval {
+  id        String   @id @default(cuid())
+  comment   String?
+  createdAt DateTime @default(now())
+
+  permitId String
+  permit   Permit @relation(fields: [permitId], references: [id], onDelete: Cascade)
+
+  approverId String
+  approver   User   @relation("ApprovedBy", fields: [approverId], references: [id])
+}
